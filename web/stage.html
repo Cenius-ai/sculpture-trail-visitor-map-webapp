@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+
+{% block main_class %}page{% endblock %}
+
+{% block content %}
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="/">Trail map</a>
+  <span class="crumbs__sep">/</span>
+  <span aria-current="page">Stage {{ stage.sequence }} · {{ stage.name }}</span>
+</nav>
+
+<div class="page-head">
+  <div class="page-head__text">
+    <span class="chip-label">Stage {{ stage.sequence }} of the Bramble Head trail</span>
+    <h1>{{ stage.name }}</h1>
+    <p class="lede">{{ stage.description }}</p>
+  </div>
+  <div class="meta-row">
+    <span class="chip">{{ stage.sculpture_count }} sculpture{{ '' if stage.sculpture_count == 1 else 's' }}</span>
+    <a class="btn btn--sm" href="/">Back to the map</a>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <div class="stack">
+    <section class="panel panel--raised" aria-labelledby="a11y-heading">
+      <header class="panel__head">
+        <h2 class="panel__title" id="a11y-heading">
+          <span class="chip-label">Accessibility</span>
+          Before you set out
+        </h2>
+      </header>
+      <div class="panel__body">
+        <p class="a11y-note">{{ stage.accessibility_notes }}</p>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="stage-sculptures-heading">
+      <header class="panel__head">
+        <h2 class="panel__title" id="stage-sculptures-heading">
+          <span class="chip-label">Pieces</span>
+          Sculptures on this stage, in trail order
+        </h2>
+        <span class="meta-row">{{ stage_sculptures|length }} in order</span>
+      </header>
+
+      {% if stage_sculptures %}
+      <div class="table-wrap">
+        <table class="data-table">
+          <caption class="visually-hidden">Sculptures on {{ stage.name }} in trail order</caption>
+          <thead>
+            <tr>
+              <th scope="col" class="num">Order</th>
+              <th scope="col">Sculpture</th>
+              <th scope="col">Artist</th>
+              <th scope="col">Material</th>
+              <th scope="col" class="num">Rating</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for piece in stage_sculptures %}
+            <tr>
+              <td class="num">{{ loop.index }}</td>
+              <td class="cell-title"><a href="/sculptures/{{ piece.id }}">{{ piece.title }}</a></td>
+              <td>{{ piece.artist }}</td>
+              <td>{{ piece.material }}</td>
+              <td class="num">{{ piece.average_rating|rating_label }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty">
+        <h3>No sculptures installed on this stage yet</h3>
+        <p>{% if user and user.is_curator %}<a href="/curator">Assign a sculpture to this stage</a> in the curator studio and it will appear here in trail order.{% else %}The trail office is still installing pieces on this stage. Check back soon.{% endif %}</p>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="panel panel--raised" aria-labelledby="stage-map-heading">
+      <header class="panel__head">
+        <h2 class="panel__title" id="stage-map-heading"><span class="chip-label">Plan</span> Where this stage runs</h2>
+      </header>
+      <ul id="trail-data" class="visually-hidden" aria-hidden="true">
+        {% for piece in stage_sculptures %}
+        <li
+          data-sculpture-id="{{ piece.id }}"
+          data-title="{{ piece.title }}"
+          data-artist="{{ piece.artist }}"
+          data-material="{{ piece.material }}"
+          data-lat="{{ piece.lat }}"
+          data-lng="{{ piece.lng }}"
+          data-stage-id="{{ piece.stage_id }}"
+          data-stage-name="{{ piece.stage_name }}"
+          data-stage-sequence="{{ piece.stage_sequence }}"
+          data-url="/sculptures/{{ piece.id }}"
+          data-rating="{{ piece.average_rating if piece.average_rating is not none else '' }}"></li>
+        {% endfor %}
+      </ul>
+      <div class="map-shell" id="map"
+           data-mode="static"
+           data-min-lat="{{ bounds.min_lat }}"
+           data-max-lat="{{ bounds.max_lat }}"
+           data-min-lng="{{ bounds.min_lng }}"
+           data-max-lng="{{ bounds.max_lng }}">
+        <svg viewBox="0 0 1000 640" preserveAspectRatio="none" role="group"
+             aria-label="Plan of the sculptures on {{ stage.name }}">
+          <rect class="map-water" x="0" y="0" width="1000" height="118"></rect>
+          <text class="map-water-label" x="36" y="56">Bramble Head Sound</text>
+          <g class="map-grid" aria-hidden="true">
+            {% for x in range(100, 1000, 100) %}<line x1="{{ x }}" y1="118" x2="{{ x }}" y2="640"></line>{% endfor %}
+            {% for y in range(160, 641, 80) %}<line x1="0" y1="{{ y }}" x2="1000" y2="{{ y }}"></line>{% endfor %}
+          </g>
+          <path class="map-contour" d="M0 300 C 180 250, 320 350, 520 300 S 820 220, 1000 280" aria-hidden="true"></path>
+          <g data-map-viewport>
+            <path class="map-trail" data-map-trail d=""></path>
+            <g data-map-pins></g>
+          </g>
+        </svg>
+        <div class="map-popup" data-map-popup hidden>
+          <p class="map-popup__title" data-popup-title></p>
+          <p class="map-popup__meta" data-popup-meta></p>
+          <div class="map-popup__actions">
+            <a class="btn btn--sm btn--primary" data-popup-link href="/">Open sculpture</a>
+            <button type="button" class="map-popup__close" data-popup-close aria-label="Close pin details">×</button>
+          </div>
+        </div>
+        <div class="map-empty" data-map-empty hidden>
+          <h3>Nothing to plot yet</h3>
+          <p>This stage has no sculptures to show on the plan.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="stage-facts-heading">
+      <header class="panel__head">
+        <h2 class="panel__title" id="stage-facts-heading"><span class="chip-label">Stage</span> Facts</h2>
+      </header>
+      <div class="panel__body">
+        <dl class="kv">
+          <dt>Stage number</dt>
+          <dd>{{ stage.sequence }}</dd>
+          <dt>Sculptures</dt>
+          <dd>{{ stage.sculpture_count }}</dd>
+          <dt>Added</dt>
+          <dd>{{ stage.created_at|short_date }}</dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/map.js" defer></script>
+<script src="/static/js/stage.js" defer></script>
+{% endblock %}

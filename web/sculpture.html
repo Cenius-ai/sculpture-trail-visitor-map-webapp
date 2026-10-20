@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+
+{% block main_class %}page{% endblock %}
+
+{% block content %}
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="/">Trail map</a>
+  <span class="crumbs__sep">/</span>
+  <a href="/stages/{{ sculpture.stage_id }}">Stage {{ sculpture.stage_sequence }} · {{ sculpture.stage_name }}</a>
+  <span class="crumbs__sep">/</span>
+  <span aria-current="page">{{ sculpture.title }}</span>
+</nav>
+
+<div class="detail-grid" data-sculpture-id="{{ sculpture.id }}">
+  <div class="stack">
+    <section class="panel panel--raised">
+      <div class="panel__body">
+        <span class="chip-label">Sculpture</span>
+        <h1 class="detail-title">{{ sculpture.title }}</h1>
+        <p class="meta-row">
+          <strong>{{ sculpture.artist }}</strong>
+          <span class="crumbs__sep">·</span>
+          <span>{{ sculpture.material }}</span>
+          <span class="crumbs__sep">·</span>
+          <a href="/stages/{{ sculpture.stage_id }}">Stage {{ sculpture.stage_sequence }}: {{ sculpture.stage_name }}</a>
+        </p>
+        <p class="prose">{{ sculpture.description }}</p>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="feedback-heading">
+      <header class="panel__head">
+        <h2 class="panel__title" id="feedback-heading">
+          <span class="chip-label">Feedback</span>
+          Visitor notes
+        </h2>
+        <div class="rating" data-rating-summary>
+          <span class="rating__value" data-average>{% if stats.average is not none %}{{ '%.1f'|format(stats.average) }}{% else %}—{% endif %}</span>
+          <span class="rating__stars" data-stars>{{ stats.average|stars }}</span>
+          <span class="rating__count" data-count>{{ stats.count }} note{{ '' if stats.count == 1 else 's' }}</span>
+        </div>
+      </header>
+
+      <ul class="feedback-list" data-feedback-list>
+        {% for item in feedback %}
+        <li class="feedback-item">
+          <div class="feedback-item__head">
+            <span class="feedback-item__author">{{ item.author }}</span>
+            <span class="stars-display" aria-label="{{ item.rating }} out of 5">{{ item.rating|stars }}</span>
+            <span class="feedback-item__date">{{ item.created_at|human_date }}</span>
+          </div>
+          <p class="feedback-item__comment">{{ item.comment }}</p>
+        </li>
+        {% endfor %}
+        <li class="empty" data-feedback-empty {% if feedback %}hidden{% endif %}>
+          <h3>No feedback yet</h3>
+          <p>Be the first visitor to rate this piece — your note helps the next walker decide what to see.</p>
+        </li>
+      </ul>
+
+      <noscript>
+        <p class="panel__body field__hint">Posting feedback needs JavaScript enabled in this browser.</p>
+      </noscript>
+      <form class="panel__body" id="feedback-form" novalidate>
+        <div class="form-error" role="alert" data-form-error></div>
+        <fieldset class="stars-input" aria-describedby="rating-error">
+          <legend>Your rating</legend>
+          <div class="stars-input__options">
+            {% for value in [5, 4, 3, 2, 1] %}
+            <input type="radio" id="rating-{{ value }}" name="rating" value="{{ value }}">
+            <label for="rating-{{ value }}" aria-label="{{ value }} star{{ '' if value == 1 else 's' }}">★</label>
+            {% endfor %}
+          </div>
+          <p class="field__error" id="rating-error" data-error-for="rating"></p>
+        </fieldset>
+
+        <div class="field">
+          <label for="feedback-comment">Your comment</label>
+          <textarea class="textarea" id="feedback-comment" name="comment" maxlength="1000" required aria-describedby="comment-help comment-error"></textarea>
+          <span class="field__hint" id="comment-help">Between 3 and 1000 characters. Be specific — what did you notice in person?</span>
+          <p class="field__error" id="comment-error" data-error-for="comment"></p>
+        </div>
+
+        <button class="btn btn--primary" type="submit">
+          <span class="btn__label">Post feedback</span>
+          <span class="btn__busy">Posting…</span>
+        </button>
+        <span class="visually-hidden" role="status" data-feedback-status></span>
+      </form>
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="panel" aria-labelledby="stage-note-heading">
+      <header class="panel__head">
+        <h2 class="panel__title" id="stage-note-heading">
+          <span class="chip-label">Stage {{ sculpture.stage_sequence }}</span>
+          {{ sculpture.stage_name }}
+        </h2>
+      </header>
+      <div class="panel__body stack stack--tight">
+        <p class="a11y-note">{{ sculpture.stage_accessibility_notes }}</p>
+        <a class="btn btn--sm" href="/stages/{{ sculpture.stage_id }}">Open the stage guide</a>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="location-heading">
+      <header class="panel__head">
+        <h2 class="panel__title" id="location-heading"><span class="chip-label">Location</span> Stored coordinates</h2>
+      </header>
+      <div class="panel__body">
+        <dl class="kv">
+          <dt>Latitude</dt>
+          <dd>{{ sculpture.lat|coordinate('N', 'S') }}</dd>
+          <dt>Longitude</dt>
+          <dd>{{ sculpture.lng|coordinate('E', 'W') }}</dd>
+          <dt>Trail stage</dt>
+          <dd>{{ sculpture.stage_sequence }}</dd>
+          <dt>Added</dt>
+          <dd>{{ sculpture.created_at|short_date }}</dd>
+        </dl>
+        <p class="field__hint">Projected on the local trail plan, not a street map.</p>
+        <div class="row-actions">
+          <a class="btn btn--sm" href="/?focus={{ sculpture.id }}">{{ ui.icon_pin(14) }} View on the map</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="nearby-heading">
+      <header class="panel__head">
+        <h2 class="panel__title" id="nearby-heading"><span class="chip-label">Trail</span> Next on the route</h2>
+      </header>
+      <div class="panel__body stack stack--tight">
+        {% if next_piece %}
+        <a class="stage-card" href="/sculptures/{{ next_piece.id }}">
+          <span class="stage-card__top">
+            <span class="stage-card__name">{{ next_piece.title }}</span>
+            <span class="stage-card__count">{{ next_piece.artist }}</span>
+          </span>
+          <span class="stage-card__desc">{{ next_piece.material }} · Stage {{ next_piece.stage_sequence }} {{ next_piece.stage_name }}</span>
+        </a>
+        {% endif %}
+        <a class="btn btn--sm btn--ghost" href="/">Back to the trail map</a>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/sculpture.js" defer></script>
+{% endblock %}

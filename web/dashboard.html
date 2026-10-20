@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+
+{% block main_class %}page{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div class="page-head__text">
+    <span class="chip-label">Bramble Head trail</span>
+    <h1>Trail map</h1>
+    <p class="lede">Every sculpture on the headland, projected from its stored coordinates. Pick a stage to narrow the route, then open a piece for its accessibility note and visitor feedback.</p>
+  </div>
+  <div class="meta-row">
+    <span class="chip">{{ stats.sculpture_count }} sculptures</span>
+    <span class="chip">{{ stats.stage_count }} stages</span>
+    <span class="chip">{{ stats.feedback_count }} visitor notes</span>
+    {% if stats.average_rating %}
+    <span class="chip chip--accent">{{ stats.average_rating|rating_label }} average</span>
+    {% endif %}
+  </div>
+</div>
+
+<div id="dashboard-error" class="banner" role="alert" hidden>
+  <span data-error-text>We could not refresh the trail data.</span>
+  <button type="button" class="btn btn--sm banner__spacer" data-retry>Try again</button>
+</div>
+
+<ul id="trail-data" class="visually-hidden" aria-hidden="true">
+  {% for sculpture in sculptures %}
+  <li
+    data-sculpture-id="{{ sculpture.id }}"
+    data-title="{{ sculpture.title }}"
+    data-artist="{{ sculpture.artist }}"
+    data-material="{{ sculpture.material }}"
+    data-lat="{{ sculpture.lat }}"
+    data-lng="{{ sculpture.lng }}"
+    data-stage-id="{{ sculpture.stage_id }}"
+    data-stage-name="{{ sculpture.stage_name }}"
+    data-stage-sequence="{{ sculpture.stage_sequence }}"
+    data-url="/sculptures/{{ sculpture.id }}"
+    data-rating="{{ sculpture.average_rating if sculpture.average_rating is not none else '' }}"></li>
+  {% endfor %}
+</ul>
+
+<div class="dashboard-grid">
+  <section class="panel panel--raised" aria-labelledby="map-heading">
+    <header class="panel__head">
+      <h2 class="panel__title" id="map-heading">
+        <span class="chip-label">Trail map</span>
+        <span data-map-summary>{{ sculptures|length }} pins</span>
+      </h2>
+      <div class="map-toolbar">
+        <label class="visually-hidden" for="stage-filter">Filter the map by trail stage</label>
+        <select id="stage-filter" class="map-select" name="stage">
+          <option value="all">All stages</option>
+          {% for stage in stages %}
+          <option value="{{ stage.id }}">{{ stage.sequence }}. {{ stage.name }}</option>
+          {% endfor %}
+        </select>
+        <button type="button" class="icon-btn" data-map-zoom="in" aria-label="Zoom in">+</button>
+        <button type="button" class="icon-btn" data-map-zoom="out" aria-label="Zoom out">−</button>
+        <button type="button" class="btn btn--sm btn--ghost" data-map-reset>Reset view</button>
+      </div>
+    </header>
+
+    <div class="map-shell" id="map"
+         data-mode="interactive"
+         data-min-lat="{{ bounds.min_lat }}"
+         data-max-lat="{{ bounds.max_lat }}"
+         data-min-lng="{{ bounds.min_lng }}"
+         data-max-lng="{{ bounds.max_lng }}">
+      <svg viewBox="0 0 1000 640" preserveAspectRatio="none" role="group"
+           aria-label="Projected plan of the Bramble Head sculpture trail with a pin for each sculpture">
+        <rect class="map-water" x="0" y="0" width="1000" height="118"></rect>
+        <text class="map-water-label" x="36" y="56">Bramble Head Sound</text>
+        <g class="map-grid" aria-hidden="true">
+          {% for x in range(100, 1000, 100) %}<line x1="{{ x }}" y1="118" x2="{{ x }}" y2="640"></line>{% endfor %}
+          {% for y in range(160, 641, 80) %}<line x1="0" y1="{{ y }}" x2="1000" y2="{{ y }}"></line>{% endfor %}
+        </g>
+        <path class="map-contour" d="M0 300 C 180 250, 320 350, 520 300 S 820 220, 1000 280" aria-hidden="true"></path>
+        <path class="map-contour" d="M0 470 C 220 420, 360 520, 560 470 S 840 400, 1000 450" aria-hidden="true"></path>
+        <g data-map-viewport>
+          <path class="map-trail" data-map-trail d=""></path>
+          <g data-map-pins></g>
+        </g>
+      </svg>
+
+      <div class="map-popup" data-map-popup hidden>
+        <p class="map-popup__title" data-popup-title></p>
+        <p class="map-popup__meta" data-popup-meta></p>
+        <div class="map-popup__actions">
+          <a class="btn btn--sm btn--primary" data-popup-link href="/">Open sculpture</a>
+          <button type="button" class="map-popup__close" data-popup-close aria-label="Close pin details">×</button>
+        </div>
+      </div>
+
+      <div class="map-empty" data-map-empty hidden>
+        <h3 data-map-empty-title>No sculptures on this stage yet</h3>
+        <p data-map-empty-text>Clear the stage filter to see the whole trail.</p>
+        <div class="row-actions">
+          <button type="button" class="btn btn--sm" data-clear-filter>Show the whole trail</button>
+          <a class="btn btn--sm btn--primary" href="/curator" {% if not (user and user.is_curator) %}hidden{% endif %}>Add the first sculpture</a>
+        </div>
+      </div>
+
+      <div class="map-loading" aria-hidden="true">
+        <div class="skeleton skeleton--line"></div>
+        <div class="skeleton skeleton--line"></div>
+        <div class="skeleton skeleton--line"></div>
+      </div>
+
+      <p class="map-hint">Drag to pan · scroll to zoom · Tab to reach each pin</p>
+    </div>
+
+    <div class="panel__foot">
+      <span>Coordinates are stored per sculpture and projected locally — no map tiles are fetched.</span>
+      {% if user and user.is_curator %}
+      <a class="btn btn--sm" href="/curator">Manage sculptures</a>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="stages-heading">
+    <header class="panel__head">
+      <h2 class="panel__title" id="stages-heading">
+        <span class="chip-label">Stages</span>
+        Accessibility notes
+      </h2>
+      <button type="button" class="btn btn--sm btn--ghost" data-clear-filter hidden>Clear filter</button>
+    </header>
+    <ol class="stage-list">
+      {% for stage in stages %}
+      <li data-stage-item="{{ stage.id }}">
+        <a class="stage-card" href="/stages/{{ stage.id }}">
+          <span class="stage-card__top">
+            <span class="chip">Stage {{ stage.sequence }}</span>
+            <span class="stage-card__name">{{ stage.name }}</span>
+            <span class="stage-card__count">{{ stage.sculpture_count }} piece{{ '' if stage.sculpture_count == 1 else 's' }}</span>
+          </span>
+          <span class="stage-card__desc">{{ stage.description }}</span>
+          <span class="stage-card__a11y">{{ ui.icon_access(14) }}<span>{{ stage.accessibility_notes }}</span></span>
+        </a>
+      </li>
+      {% else %}
+      <li class="empty">
+        <h3>No stages on the trail yet</h3>
+        <p>{% if user and user.is_curator %}<a href="/curator">Add the first trail stage</a> in the curator studio.{% else %}Check back once the trail office has laid out the stages.{% endif %}</p>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+</div>
+
+<section class="panel" aria-labelledby="index-heading">
+  <header class="panel__head">
+    <h2 class="panel__title" id="index-heading">
+      <span class="chip-label">Index</span>
+      Sculptures in trail order
+    </h2>
+    <span class="meta-row"><span data-index-count>{{ sculptures|length }} shown</span></span>
+  </header>
+
+  {% if sculptures %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th scope="col">Sculpture</th>
+          <th scope="col">Artist</th>
+          <th scope="col">Material</th>
+          <th scope="col">Stage</th>
+          <th scope="col" class="num">Rating</th>
+        </tr>
+      </thead>
+      <tbody data-index-body>
+        {% for sculpture in sculptures %}
+        <tr data-index-row="{{ sculpture.id }}" data-stage-id="{{ sculpture.stage_id }}">
+          <td class="cell-title"><a href="/sculptures/{{ sculpture.id }}">{{ sculpture.title }}</a></td>
+          <td>{{ sculpture.artist }}</td>
+          <td>{{ sculpture.material }}</td>
+          <td><a href="/stages/{{ sculpture.stage_id }}">{{ sculpture.stage_sequence }}. {{ sculpture.stage_name }}</a></td>
+          <td class="num">{{ sculpture.average_rating|rating_label }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="empty" data-index-empty hidden>
+    <h3>No sculptures match this stage</h3>
+    <p>Clear the stage filter to see the whole trail again.</p>
+  </div>
+  {% else %}
+  <div class="empty">
+    <h3>The trail has no sculptures yet</h3>
+    <p>{% if user and user.is_curator %}<a href="/curator">Add the first sculpture</a> in the curator studio and it will appear on this map.{% else %}Check back soon — the trail office is still installing pieces.{% endif %}</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/map.js" defer></script>
+<script src="/static/js/dashboard.js" defer></script>
+{% endblock %}

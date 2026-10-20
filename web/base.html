@@ -1,0 +1,92 @@
+{% import "macros.html" as ui %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page_title }} · Sculpture Trail Visitor Map</title>
+  <meta name="description" content="A local map of the Bramble Head sculpture trail: eight sculptures, three stages, accessibility notes, and visitor feedback.">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="/">
+        <span class="brand__mark">{{ ui.icon_trail(20) }}</span>
+        <span class="brand__name">Sculpture Trail <span>· Bramble Head</span></span>
+      </a>
+
+      <nav class="topnav" aria-label="Trail sections">
+        <a href="/" {% if request_path == '/' %}aria-current="page"{% endif %}>Map</a>
+        {% for stage in nav_stages %}
+        <a href="/stages/{{ stage.id }}" {% if request_path == '/stages/' ~ stage.id %}aria-current="page"{% endif %}>{{ stage.sequence }}. {{ stage.name }}</a>
+        {% endfor %}
+        {% if user and user.is_curator %}
+        <a href="/curator" {% if request_path == '/curator' %}aria-current="page"{% endif %}>Studio</a>
+        {% endif %}
+      </nav>
+
+      <div class="topbar__actions">
+        <button type="button" class="btn btn--ghost btn--sm" data-palette-open aria-keyshortcuts="Meta+K Control+K">
+          {{ ui.icon_search(15) }}
+          <span class="btn__label">Jump to</span>
+          <kbd>⌘K</kbd>
+        </button>
+        {% if user %}
+        <span class="who">
+          <span class="who__name">{{ user.display_name }}</span>
+          {% if user.is_curator %}<span class="chip chip--accent">Curator</span>{% endif %}
+        </span>
+        <form method="post" action="/logout">
+          <button type="submit" class="btn btn--sm">Sign out</button>
+        </form>
+        {% elif request_path not in ['/login', '/signup'] %}
+        <a class="btn btn--primary btn--sm" href="/login">Sign in</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="{% block main_class %}page{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner">
+      <span>Sculpture Trail Visitor Map · Bramble Head coastal trail</span>
+      <span>Local trail projection — no external tiles, no tracking.</span>
+    </div>
+  </footer>
+
+  <dialog id="palette" class="palette" aria-label="Jump to a page">
+    <div class="palette__inner">
+      <div class="palette__search">
+        {{ ui.icon_search(16) }}
+        <label class="visually-hidden" for="palette-input">Search sculptures, stages, and pages</label>
+        <input id="palette-input" class="input" type="search" placeholder="Search sculptures, stages, pages…" autocomplete="off" spellcheck="false">
+        <kbd>Esc</kbd>
+      </div>
+      <ul class="palette__list" id="palette-list">
+        {% for item in palette_items %}
+        <li>
+          <a href="{{ item.href }}" data-search="{{ item.label|lower }} {{ item.hint|lower }} {{ item.kind|lower }}">
+            <span class="palette__kind">{{ item.kind }}</span>
+            <span>{{ item.label }}</span>
+            <span class="palette__hint">{{ item.hint }}</span>
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+      <p class="palette__empty" id="palette-empty" hidden>No sculptures, stages, or pages match that search.</p>
+      <div class="palette__foot"><span>↑ ↓ to move</span><span>Enter to open</span><span>Esc to close</span></div>
+    </div>
+  </dialog>
+
+  <script src="/static/js/shell.js" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

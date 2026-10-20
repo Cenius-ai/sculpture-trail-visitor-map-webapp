@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+
+{% block main_class %}page{% endblock %}
+
+{% block content %}
+<section class="panel panel--raised" aria-labelledby="error-heading">
+  <div class="panel__body stack">
+    <span class="chip-label">Error {{ status_code }}</span>
+    <h1 id="error-heading">Something went wrong on our side</h1>
+    <p class="lede">{{ message }}</p>
+    <div class="row-actions">
+      <a class="btn btn--primary" href="/">Back to the trail map</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

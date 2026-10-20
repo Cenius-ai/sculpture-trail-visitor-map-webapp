@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+
+{% block main_class %}page auth-shell{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <div class="auth-card__head">
+    <span class="chip-label">Bramble Head sculpture trail</span>
+    <h1>Sign in to the trail map</h1>
+    <p class="lede">Eight sculptures across three stages, with accessibility notes, coordinates, and visitor feedback.</p>
+  </div>
+
+  <div class="demo-box">
+    <p class="demo-box__title">{{ ui.icon_pin(15) }} Demo accounts</p>
+    <div class="demo-box__row">
+      <span>Curator</span>
+      <code>cenius@cenius.ai / cenius</code>
+    </div>
+    <div class="demo-box__row">
+      <span>Visitor</span>
+      <code>visitor@example.com / trail1234</code>
+    </div>
+    <button type="button" class="btn btn--sm btn--primary btn--block" data-demo-fill>Sign in with the curator demo</button>
+  </div>
+
+  <div id="login-error" class="form-error" role="alert">{{ message }}</div>
+
+  <form id="login-form" method="post" action="/login{% if next_url and next_url != '/' %}?next={{ next_url|urlencode }}{% endif %}" novalidate data-next="{{ next_url }}">
+    <div class="field">
+      <label for="login-email">Email or username</label>
+      <input class="input" id="login-email" name="email" type="text" value="{{ email }}" autocomplete="username" autocapitalize="none" spellcheck="false" required aria-describedby="login-email-error">
+      <p class="field__error" id="login-email-error" data-error-for="email">{{ errors.get('email', '') }}</p>
+    </div>
+
+    <div class="field">
+      <label for="login-password">Password</label>
+      <div class="password-row">
+        <input class="input" id="login-password" name="password" type="password" autocomplete="current-password" required aria-describedby="login-password-error">
+        <button type="button" class="password-toggle" data-toggle-password="login-password" aria-pressed="false" aria-controls="login-password">Show</button>
+      </div>
+      <p class="field__error" id="login-password-error" data-error-for="password">{{ errors.get('password', '') }}</p>
+    </div>
+
+    <button class="btn btn--primary btn--block" type="submit">
+      <span class="btn__label">Sign in</span>
+      <span class="btn__busy">Signing in…</span>
+    </button>
+  </form>
+
+  <p class="auth-card__foot">No account yet? <a href="/signup{% if next_url and next_url != '/' %}?next={{ next_url|urlencode }}{% endif %}">Create one</a></p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/auth.js" defer></script>
+{% endblock %}

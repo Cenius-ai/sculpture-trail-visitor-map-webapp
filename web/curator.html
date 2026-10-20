@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+
+{% block main_class %}page{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div class="page-head__text">
+    <span class="chip-label">Curator studio</span>
+    <h1>Manage the trail</h1>
+    <p class="lede">Create and maintain sculptures and trail stages with their accessibility notes. Every save is written to the trail database and reflected on the map and detail pages.</p>
+  </div>
+  <div class="meta-row">
+    <span class="chip">{{ stats.sculpture_count }} sculptures</span>
+    <span class="chip">{{ stats.stage_count }} stages</span>
+    <a class="btn btn--sm" href="/">Back to the map</a>
+  </div>
+</div>
+
+<div id="curator-banner" class="banner banner--ok" role="status" hidden>
+  <span data-banner-text></span>
+</div>
+<div id="curator-error" class="banner" role="alert" hidden>
+  <span data-error-text></span>
+</div>
+
+<noscript>
+  <p class="banner">The curator studio saves through JavaScript. Enable it to create or edit trail records.</p>
+</noscript>
+
+<div class="curator-grid">
+  <div class="stack">
+    <section class="panel panel--raised" id="sculpture-form-panel" aria-labelledby="sculpture-form-heading">
+      <div class="panel__body">
+        <div class="form-panel__title-row">
+          <h2 id="sculpture-form-heading" data-sculpture-form-title>Add a sculpture</h2>
+          <button type="button" class="btn btn--sm btn--ghost" data-cancel-sculpture hidden>Cancel edit</button>
+        </div>
+
+        <form id="sculpture-form" novalidate data-mode="create" data-id="">
+          <div class="form-error" role="alert" data-form-error></div>
+
+          <div class="field">
+            <label for="sculpture-title">Title</label>
+            <input class="input" id="sculpture-title" name="title" type="text" maxlength="90" required>
+            <p class="field__error" data-error-for="title"></p>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label for="sculpture-artist">Artist</label>
+              <input class="input" id="sculpture-artist" name="artist" type="text" maxlength="90" required>
+              <p class="field__error" data-error-for="artist"></p>
+            </div>
+            <div class="field">
+              <label for="sculpture-material">Material</label>
+              <input class="input" id="sculpture-material" name="material" type="text" maxlength="90" required>
+              <p class="field__error" data-error-for="material"></p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="sculpture-stage">Trail stage</label>
+            <select class="select" id="sculpture-stage" name="stage_id" required>
+              {% for stage in stages %}
+              <option value="{{ stage.id }}">{{ stage.sequence }}. {{ stage.name }}</option>
+              {% endfor %}
+            </select>
+            <p class="field__error" data-error-for="stage_id"></p>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label for="sculpture-lat">Latitude</label>
+              <input class="input" id="sculpture-lat" name="lat" type="number" inputmode="decimal" step="0.0001" min="-90" max="90" value="53.3480" required>
+              <span class="field__hint">Between -90 and 90 (N positive).</span>
+              <p class="field__error" data-error-for="lat"></p>
+            </div>
+            <div class="field">
+              <label for="sculpture-lng">Longitude</label>
+              <input class="input" id="sculpture-lng" name="lng" type="number" inputmode="decimal" step="0.0001" min="-180" max="180" value="-1.8300" required>
+              <span class="field__hint">Between -180 and 180 (E positive).</span>
+              <p class="field__error" data-error-for="lng"></p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="sculpture-description">Description</label>
+            <textarea class="textarea" id="sculpture-description" name="description" maxlength="1000" required></textarea>
+            <span class="field__hint">At least 20 characters — what should a visitor notice in person?</span>
+            <p class="field__error" data-error-for="description"></p>
+          </div>
+
+          <button class="btn btn--primary" type="submit">
+            <span class="btn__label">Save sculpture</span>
+            <span class="btn__busy">Saving…</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel" id="stage-form-panel" aria-labelledby="stage-form-heading">
+      <div class="panel__body">
+        <div class="form-panel__title-row">
+          <h2 id="stage-form-heading" data-stage-form-title>Add a trail stage</h2>
+          <button type="button" class="btn btn--sm btn--ghost" data-cancel-stage hidden>Cancel edit</button>
+        </div>
+
+        <form id="stage-form" novalidate data-mode="create" data-id="">
+          <div class="form-error" role="alert" data-form-error></div>
+
+          <div class="form-row">
+            <div class="field">
+              <label for="stage-name">Stage name</label>
+              <input class="input" id="stage-name" name="name" type="text" maxlength="80" required>
+              <p class="field__error" data-error-for="name"></p>
+            </div>
+            <div class="field">
+              <label for="stage-sequence">Stage number</label>
+              <input class="input" id="stage-sequence" name="sequence" type="number" inputmode="numeric" min="1" max="99" step="1" value="{{ stages|length + 1 }}" required>
+              <p class="field__error" data-error-for="sequence"></p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="stage-description">Short description</label>
+            <textarea class="textarea" id="stage-description" name="description" maxlength="400" required></textarea>
+            <p class="field__error" data-error-for="description"></p>
+          </div>
+
+          <div class="field">
+            <label for="stage-accessibility">Accessibility notes</label>
+            <textarea class="textarea" id="stage-accessibility" name="accessibility_notes" maxlength="400" required></textarea>
+            <span class="field__hint">Surface, gradients, widths, and where the accessible viewing points are.</span>
+            <p class="field__error" data-error-for="accessibility_notes"></p>
+          </div>
+
+          <button class="btn btn--primary" type="submit">
+            <span class="btn__label">Save stage</span>
+            <span class="btn__busy">Saving…</span>
+          </button>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="panel" aria-labelledby="studio-sculptures-heading">
+      <header class="panel__head">
+        <h2 class="panel__title" id="studio-sculptures-heading">
+          <span class="chip-label">Sculptures</span>
+          <span data-sculpture-count>{{ sculptures|length }} on the trail</span>
+        </h2>
+      </header>
+      <div class="table-wrap" {% if not sculptures %}hidden data-empty-table{% endif %}>
+        <table class="data-table">
+          <caption class="visually-hidden">Sculptures on the trail</caption>
+          <thead>
+            <tr>
+              <th scope="col">Sculpture</th>
+              <th scope="col">Stage</th>
+              <th scope="col" class="num">Coordinates</th>
+              <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody data-sculpture-rows>
+            {% for sculpture in sculptures %}
+            <tr data-sculpture-row="{{ sculpture.id }}">
+              <td class="cell-title">
+                <a href="/sculptures/{{ sculpture.id }}">{{ sculpture.title }}</a>
+                <div class="field__hint">{{ sculpture.artist }} · {{ sculpture.material }}</div>
+              </td>
+              <td>{{ sculpture.stage_sequence }}. {{ sculpture.stage_name }}</td>
+              <td class="num">{{ sculpture.lat|coordinate('N', 'S') }}<br>{{ sculpture.lng|coordinate('E', 'W') }}</td>
+              <td>
+                <div class="row-actions">
+                  <button type="button" class="btn btn--sm" data-edit-sculpture="{{ sculpture.id }}" aria-label="Edit {{ sculpture.title }}">Edit</button>
+                  <button type="button" class="btn btn--sm btn--danger" data-delete-sculpture="{{ sculpture.id }}" aria-label="Delete {{ sculpture.title }}">Delete</button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="empty" data-sculpture-empty {% if sculptures %}hidden{% endif %}>
+        <h3>No sculptures yet</h3>
+        <p>Use the form to add the first piece to the trail.</p>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="studio-stages-heading">
+      <header class="panel__head">
+        <h2 class="panel__title" id="studio-stages-heading">
+          <span class="chip-label">Stages</span>
+          <span data-stage-count>{{ stages|length }} on the trail</span>
+        </h2>
+      </header>
+      <div class="table-wrap" {% if not stages %}hidden data-empty-table{% endif %}>
+        <table class="data-table">
+          <caption class="visually-hidden">Trail stages</caption>
+          <thead>
+            <tr>
+              <th scope="col" class="num">#</th>
+              <th scope="col">Stage</th>
+              <th scope="col" class="num">Pieces</th>
+              <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody data-stage-rows>
+            {% for stage in stages %}
+            <tr data-stage-row="{{ stage.id }}">
+              <td class="num">{{ stage.sequence }}</td>
+              <td class="cell-title">
+                <a href="/stages/{{ stage.id }}">{{ stage.name }}</a>
+                <div class="field__hint">{{ stage.accessibility_notes|truncate(68, true, '…') }}</div>
+              </td>
+              <td class="num" data-stage-pieces="{{ stage.id }}">{{ stage.sculpture_count }}</td>
+              <td>
+                <div class="row-actions">
+                  <button type="button" class="btn btn--sm" data-edit-stage="{{ stage.id }}" aria-label="Edit {{ stage.name }}">Edit</button>
+                  <button type="button" class="btn btn--sm btn--danger" data-delete-stage="{{ stage.id }}" aria-label="Delete {{ stage.name }}">Delete</button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="empty" data-stage-empty {% if stages %}hidden{% endif %}>
+        <h3>No stages yet</h3>
+        <p>Add a stage first, then install sculptures along it.</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<dialog id="confirm-dialog" class="dialog" aria-labelledby="confirm-title">
+  <h2 id="confirm-title">Delete this record?</h2>
+  <p class="lede" id="confirm-message">This cannot be undone.</p>
+  <div class="dialog__actions">
+    <button type="button" class="btn" data-confirm-cancel>Cancel</button>
+    <button type="button" class="btn btn--danger" data-confirm-ok>Delete</button>
+  </div>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/curator.js" defer></script>
+{% endblock %}

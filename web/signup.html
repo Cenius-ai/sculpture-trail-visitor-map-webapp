@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+
+{% block main_class %}page auth-shell{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <div class="auth-card__head">
+    <span class="chip-label">Bramble Head sculpture trail</span>
+    <h1>Create your visitor account</h1>
+    <p class="lede">Rate and comment on the sculptures you visit. Curator tools stay with the trail office.</p>
+  </div>
+
+  <div id="signup-error" class="form-error" role="alert">{{ message }}</div>
+
+  <form id="signup-form" method="post" action="/signup{% if next_url and next_url != '/' %}?next={{ next_url|urlencode }}{% endif %}" novalidate data-next="{{ next_url }}">
+    <div class="field">
+      <label for="signup-name">Your name</label>
+      <input class="input" id="signup-name" name="display_name" type="text" value="{{ values.get('display_name', '') }}" autocomplete="name" maxlength="60" required aria-describedby="signup-name-error">
+      <p class="field__error" id="signup-name-error" data-error-for="display_name">{{ errors.get('display_name', '') }}</p>
+    </div>
+
+    <div class="field">
+      <label for="signup-email">Email</label>
+      <input class="input" id="signup-email" name="email" type="email" value="{{ values.get('email', '') }}" autocomplete="email" autocapitalize="none" spellcheck="false" required aria-describedby="signup-email-error">
+      <p class="field__error" id="signup-email-error" data-error-for="email">{{ errors.get('email', '') }}</p>
+    </div>
+
+    <div class="field">
+      <label for="signup-password">Password</label>
+      <div class="password-row">
+        <input class="input" id="signup-password" name="password" type="password" autocomplete="new-password" minlength="8" required aria-describedby="signup-password-error signup-password-help">
+        <button type="button" class="password-toggle" data-toggle-password="signup-password" aria-pressed="false" aria-controls="signup-password">Show</button>
+      </div>
+      <span class="field__hint" id="signup-password-help">At least 8 characters.</span>
+      <p class="field__error" id="signup-password-error" data-error-for="password">{{ errors.get('password', '') }}</p>
+    </div>
+
+    <div class="field">
+      <label for="signup-confirm">Confirm password</label>
+      <input class="input" id="signup-confirm" name="password_confirm" type="password" autocomplete="new-password" minlength="8" required aria-describedby="signup-confirm-error">
+      <p class="field__error" id="signup-confirm-error" data-error-for="password_confirm">{{ errors.get('password_confirm', '') }}</p>
+    </div>
+
+    <button class="btn btn--primary btn--block" type="submit">
+      <span class="btn__label">Create account</span>
+      <span class="btn__busy">Creating account…</span>
+    </button>
+  </form>
+
+  <p class="auth-card__foot">Already have an account? <a href="/login">Sign in</a></p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/auth.js" defer></script>
+{% endblock %}

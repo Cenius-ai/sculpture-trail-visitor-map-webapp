@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+
+{% block main_class %}page{% endblock %}
+
+{% block content %}
+<section class="panel panel--raised" aria-labelledby="forbidden-heading">
+  <div class="panel__body stack">
+    <span class="chip-label">Curator only</span>
+    <h1 id="forbidden-heading">The studio is limited to trail curators</h1>
+    <p class="lede">You are signed in as {{ user.display_name }} with a visitor account. Trail stages, sculptures, and accessibility notes are maintained by the trail office.</p>
+    <div class="row-actions">
+      <a class="btn btn--primary" href="/">Back to the trail map</a>
+    </div>
+    <p class="field__hint">Curator demo sign-in: cenius@cenius.ai / cenius</p>
+  </div>
+</section>
+{% endblock %}
