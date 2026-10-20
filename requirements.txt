@@ -1,0 +1,10 @@
+# Sculpture Trail Visitor Map - runtime dependencies
+sanic==24.6.0
+aiosqlite==0.20.0
+jinja2==3.1.4
+
+# Test tooling (pytest is the suite runner declared for this project)
+pytest==8.3.3
+pytest-asyncio==0.24.0
+sanic-testing==24.6.0
+httpx==0.28.1

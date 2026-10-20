@@ -1,0 +1,21 @@
+# Local configuration (never commit real secrets)
+.env
+
+# SQLite database files (created and seeded on boot)
+trail.db
+trail.db-wal
+trail.db-shm
+*.db
+*.db-wal
+*.db-shm
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Editors / OS
+.DS_Store
+*.swp
