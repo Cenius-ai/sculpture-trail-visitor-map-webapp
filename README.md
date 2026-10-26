@@ -80,7 +80,7 @@ _Full guide: [`USAGE.md`](USAGE.md)_
 
 ## Architecture
 
-Everything runs out of the box: a Full-stack app codebase (62 files). One command (`./install.sh`) covers dependency setup and demo-data seeding. Top-level layout: `routes/`, `tests/`, `web/`. Step-by-step setup guide: [`INSTALL.md`](INSTALL.md).
+Everything runs out of the box: a Full-stack app codebase (49 files). One command (`./install.sh`) covers dependency setup and demo-data seeding. Top-level layout: `routes/`, `tests/`, `web/`. Step-by-step setup guide: [`INSTALL.md`](INSTALL.md).
 
 ## FAQ
 
